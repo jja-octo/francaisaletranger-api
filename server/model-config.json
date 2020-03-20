@@ -36,7 +36,7 @@
     "public": false
   },
   "NeedHelp": {
-    "dataSource": "db",
+    "dataSource": "heroku_postgres",
     "public": true
   }
 }
