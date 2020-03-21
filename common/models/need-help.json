@@ -22,8 +22,20 @@
       "type": "object",
       "required": true
     },
-    "helpFor": {
-      "type": "object",
+    "gps_coordinates": {
+      "type": "GeoPoint",
+      "required": true
+    },
+    "nombre_hebergement": {
+      "type": "number",
+      "required": true
+    },
+    "approvisionnement": {
+      "type": "boolean",
+      "required": true
+    },
+    "autres": {
+      "type": "boolean",
       "required": true
     }
   },
