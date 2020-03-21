@@ -40,7 +40,7 @@
     "public": true
   },
   "Helper": {
-    "dataSource": "db",
+    "dataSource": "heroku_postgres",
     "public": true
   }
 }
