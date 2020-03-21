@@ -38,5 +38,9 @@
   "NeedHelp": {
     "dataSource": "heroku_postgres",
     "public": true
+  },
+  "Helper": {
+    "dataSource": "heroku_postgres",
+    "public": true
   }
 }
