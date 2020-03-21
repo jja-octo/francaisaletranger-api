@@ -2,5 +2,6 @@
   "db": {
     "name": "db",
     "connector": "memory"
-  }
+  },
+  "heroku_postgres": {}
 }
