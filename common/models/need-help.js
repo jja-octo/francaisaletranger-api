@@ -30,6 +30,7 @@ module.exports = function (Needhelp) {
     returns: {
       args: 'response',
       type: 'object',
+      root: true,
     },
     http: {
       verb: 'get',
