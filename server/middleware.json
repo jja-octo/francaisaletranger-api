@@ -24,6 +24,7 @@
     },
     "cors": {
       "params": {
+        "exposedHeaders": ["X-Total-Count"],
         "origin": true,
         "credentials": true,
         "maxAge": 86400
