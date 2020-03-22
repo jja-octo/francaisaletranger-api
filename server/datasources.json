@@ -3,5 +3,15 @@
     "name": "db",
     "connector": "memory"
   },
-  "heroku_postgres": {}
+  "heroku_postgres": {},
+  "mailjet": {
+    "connector": "loopback-connector-mailjet",
+    "apiKey": "aa",
+    "apiSecret": "bb",
+    "options": {
+      "url": "api.mailjet.com",
+      "version": "v3.1",
+      "perform_api_call": false
+    }
+  }
 }
