@@ -42,5 +42,9 @@
   "Helper": {
     "dataSource": "heroku_postgres",
     "public": true
+  },
+  "Email": {
+    "dataSource": "mailjet",
+    "public": false
   }
 }

@@ -99,6 +99,40 @@ module.exports = function(Needhelp) {
     });
   };
 
+  Needhelp.sendMatching = function (needHelp_id, helper_id, cb) {
+    Needhelp.findOne({
+      where: {
+        id: needHelp_id,
+      },
+    }, (err, needer) => {
+      Needhelp.app.models.Helper.findOne({
+        where: {
+          id: helper_id,
+        },
+      }, (error, helper) => {
+        const neederLocation = new loopback.GeoPoint(needer.gps_coordinates);
+        var helperLocation = new loopback.GeoPoint(helper.gps_coordinates);
+        const distanceInMeters = neederLocation.distanceTo(helperLocation, {
+          type: 'meters',
+        });
+
+        loopback.Email.send({
+            from: 'foo@bar.com',
+            to: needer.email,
+            subject: `${needer.nom} nous avons trouvé un matching !`,
+            text: 'Nous avons trouvé un matching !',
+            html: `<div><p>La plateforme vient de vous trouver de l'aide.</p><p>Vous pouvez contacter ${helper.nom} ${helper.prenom}, il est à ${distanceInMeters} mètres de vous.</p><p>Vous pouvez le contacter à <a href="mailto:${helper.email}">l'adresse suivante.</a></p></div>`,
+          })
+          .then(result => {
+            // remplir la table de jointure
+
+            cb(null, result);
+          })
+          .catch(error => cb(error));
+      });
+    });
+  };
+
   Needhelp.remoteMethod('matching', {
     accepts: [{
       arg: 'id',
@@ -129,6 +163,24 @@ module.exports = function(Needhelp) {
     },
     http: {
       verb: 'get',
+    },
+  });
+
+  Needhelp.remoteMethod('sendMatching', {
+    accepts: [{
+      arg: 'needHelp_id',
+      type: 'string',
+    }, {
+      arg: 'helper_id',
+      type: 'string',
+    }],
+    returns: {
+      args: 'response',
+      type: 'object',
+      root: true,
+    },
+    http: {
+      verb: 'post',
     },
   });
 };
