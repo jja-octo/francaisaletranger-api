@@ -41,6 +41,9 @@
     "garde_enfants": {
       "type": "boolean",
       "required": true
+    },
+    "need_help_id": {
+      "type": "number"
     }
   },
   "validations": [],
