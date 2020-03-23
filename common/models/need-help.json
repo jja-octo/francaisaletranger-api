@@ -41,6 +41,9 @@
     "garde_enfants": {
       "type": "boolean",
       "required": true
+    },
+    "helper_id": {
+      "type": "number"
     }
   },
   "validations": [],
@@ -56,6 +59,12 @@
       "principalId": "$everyone",
       "permission": "ALLOW",
       "property": "create"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "$everyone",
+      "permission": "ALLOW",
+      "property": "replaceById"
     },
     {
       "principalType": "ROLE",
