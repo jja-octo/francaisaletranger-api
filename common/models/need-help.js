@@ -1,35 +1,55 @@
 'use strict';
 var loopback = require('loopback');
 
-module.exports = function (Needhelp) {
-  Needhelp.matching = function (id, maxDistance, cb) {
+module.exports = function(Needhelp) {
+  Needhelp.matching = function(id, maxDistance, cb) {
+    let savedNeeder;
+
     Needhelp.findOne({
       where: {
         id,
       },
     }, (err, needer) => {
+      savedNeeder = needer;
+
       Needhelp.app.models.Helper.find({
         where: {
-          and: [{
-            gps_coordinates: {
-              near: needer.gps_coordinates,
-              maxDistance,
-              unit: 'meters',
+          and: [
+            {
+              gps_coordinates: {
+                near: needer.gps_coordinates,
+                maxDistance,
+                unit: 'meters',
+              },
             },
-          }, {
-            nombre_hebergement: {
-              gte: needer.nombre_hebergement,
+            {
+              or: [{
+                nombre_hebergement: {
+                  gte: needer.nombre_hebergement,
+                },
+              }, {
+                approvisionnement: needer.approvisionnement,
+              }, {
+                autres: needer.autres,
+              }],
             },
-          }, {
-            approvisionnement: needer.approvisionnement,
-          }, {
-            autres: needer.autres,
-          }],
+          ],
         },
       }, (err, foundHelperList) => {
         const preparedHelperList = foundHelperList.map((foundHelper) => {
           const neederLocation = new loopback.GeoPoint(needer.gps_coordinates);
           var helperLocation = new loopback.GeoPoint(foundHelper.gps_coordinates);
+
+          function scoring(foundHelper) {
+            let score = 0;
+
+            score += (savedNeeder.nombre_hebergement > 0 && savedNeeder.nombre_hebergement >= foundHelper.nombre_hebergement) ? 1 : 0;
+            score += (savedNeeder.approvisionnement && savedNeeder.approvisionnement === foundHelper.approvisionnement) ? 1 : 0;
+            score += (savedNeeder.autres && savedNeeder.autres === foundHelper.autres) ? 1 : 0;
+
+            return score;
+          }
+
           return {
             id: foundHelper.id,
             nom: foundHelper.nom,
@@ -37,6 +57,7 @@ module.exports = function (Needhelp) {
             nombre_hebergement: foundHelper.nombre_hebergement,
             approvisionnement: foundHelper.approvisionnement,
             autres: foundHelper.autres,
+            scoring: scoring(foundHelper),
             distanceInMeters: neederLocation.distanceTo(helperLocation, {
               type: 'meters',
             }),
