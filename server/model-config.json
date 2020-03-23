@@ -14,7 +14,7 @@
     ]
   },
   "User": {
-    "dataSource": "db"
+    "dataSource": "heroku_postgres"
   },
   "AccessToken": {
     "dataSource": "db",
