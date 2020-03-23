@@ -37,6 +37,10 @@
     "autres": {
       "type": "boolean",
       "required": true
+    },
+    "garde_enfants": {
+      "type": "boolean",
+      "required": true
     }
   },
   "validations": [],
