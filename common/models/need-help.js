@@ -23,6 +23,9 @@ module.exports = function(Needhelp) {
               },
             },
             {
+              need_help_id: null,
+            },
+            {
               or: [{
                 nombre_hebergement: {
                   gte: needer.nombre_hebergement,
@@ -31,6 +34,8 @@ module.exports = function(Needhelp) {
                 approvisionnement: needer.approvisionnement,
               }, {
                 autres: needer.autres,
+              }, {
+                garde_enfants: needer.garde_enfants,
               }],
             },
           ],
@@ -46,6 +51,7 @@ module.exports = function(Needhelp) {
             score += (savedNeeder.nombre_hebergement > 0 && savedNeeder.nombre_hebergement >= foundHelper.nombre_hebergement) ? 1 : 0;
             score += (savedNeeder.approvisionnement && savedNeeder.approvisionnement === foundHelper.approvisionnement) ? 1 : 0;
             score += (savedNeeder.autres && savedNeeder.autres === foundHelper.autres) ? 1 : 0;
+            score += (savedNeeder.garde_enfants && savedNeeder.garde_enfants === foundHelper.garde_enfants) ? 1 : 0;
 
             return score;
           }
@@ -56,6 +62,7 @@ module.exports = function(Needhelp) {
             prenom: foundHelper.prenom,
             nombre_hebergement: foundHelper.nombre_hebergement,
             approvisionnement: foundHelper.approvisionnement,
+            garde_enfants: foundHelper.garde_enfants,
             autres: foundHelper.autres,
             scoring: scoring(foundHelper),
             distanceInMeters: neederLocation.distanceTo(helperLocation, {
