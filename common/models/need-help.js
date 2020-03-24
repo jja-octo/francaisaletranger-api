@@ -75,11 +75,50 @@ module.exports = function(Needhelp) {
     });
   };
 
+  Needhelp.allWithMatching = function(maxDistance, cb) {
+    Needhelp.find({
+      where: {
+        helper_id: null,
+      },
+      limit: 50,
+    }, (err, needers) => {
+
+      let requests = needers.map((needers) => {
+        return new Promise((resolve) => {
+          Needhelp.matching(needers.id, maxDistance, (err, results) => {
+            resolve(Object.assign(needers, {
+              score: results.length,
+            }));
+          });
+        });
+      });
+
+      Promise.all(requests).then((results) => {
+        cb(null, results.filter(needHelp => needHelp.score > 0));
+      });
+    });
+  };
+
   Needhelp.remoteMethod('matching', {
     accepts: [{
       arg: 'id',
       type: 'string',
     }, {
+      arg: 'maxDistance',
+      type: 'number',
+    }],
+    returns: {
+      args: 'response',
+      type: 'object',
+      root: true,
+    },
+    http: {
+      verb: 'get',
+    },
+  });
+
+  Needhelp.remoteMethod('allWithMatching', {
+    accepts: [{
       arg: 'maxDistance',
       type: 'number',
     }],

@@ -83,6 +83,12 @@
       "principalId": "$authenticated",
       "permission": "ALLOW",
       "property": "matching"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "$authenticated",
+      "permission": "ALLOW",
+      "property": "allWithMatching"
     }
   ],
   "methods": {}
