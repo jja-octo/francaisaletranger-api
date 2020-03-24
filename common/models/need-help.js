@@ -117,19 +117,20 @@ module.exports = function(Needhelp) {
         });
 
         loopback.Email.send({
-            from: 'foo@bar.com',
+            from: process.env.MAILJET_FROM,
             to: needer.email,
             subject: `${needer.nom} nous avons trouvé un matching !`,
             text: 'Nous avons trouvé un matching !',
             html: `<div><p>La plateforme vient de vous trouver de l'aide.</p><p>Vous pouvez contacter ${helper.nom} ${helper.prenom}, il est à ${distanceInMeters} mètres de vous.</p><p>Vous pouvez le contacter à <a href="mailto:${helper.email}">l'adresse suivante.</a></p></div>`,
           })
           .then(result => {
-            // remplir la table de jointure
-
-            cb(null, result);
+            needer.helper_id = helper.id
+            Needhelp.upsert(needer, ()=>{})
+            cb(null, result)
           })
           .catch(error => cb(error));
       });
+
     });
   };
 
