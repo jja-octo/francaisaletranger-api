@@ -170,10 +170,10 @@ module.exports = function(Needhelp) {
   Needhelp.remoteMethod('sendMatching', {
     accepts: [{
       arg: 'needHelp_id',
-      type: 'string',
+      type: 'number',
     }, {
       arg: 'helper_id',
-      type: 'string',
+      type: 'number',
     }],
     returns: {
       args: 'response',
