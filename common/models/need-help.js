@@ -124,9 +124,9 @@ module.exports = function(Needhelp) {
             html: `<div><p>La plateforme vient de vous trouver de l'aide.</p><p>Vous pouvez contacter ${helper.nom} ${helper.prenom}, il est à ${distanceInMeters} mètres de vous.</p><p>Vous pouvez le contacter à <a href="mailto:${helper.email}">l'adresse suivante.</a></p></div>`,
           })
           .then(result => {
-            needer.helper_id = helper.id
-            Needhelp.upsert(needer, ()=>{})
-            cb(null, result)
+            needer.helper_id = helper.id;
+            Needhelp.upsert(needer, ()=>{});
+            cb(null, result);
           })
           .catch(error => cb(error));
       });
