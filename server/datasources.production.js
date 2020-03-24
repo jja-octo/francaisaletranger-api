@@ -7,5 +7,6 @@ module.exports = {
   'heroku_postgres': {
     'url': process.env.DATABASE_URL,
     'connector': 'postgresql',
+    ssl: true,
   },
 };
