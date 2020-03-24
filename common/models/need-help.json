@@ -1,11 +1,20 @@
 {
   "name": "NeedHelp",
   "base": "PersistedModel",
-  "idInjection": true,
+  "idInjection": false,
   "options": {
     "validateUpsert": true
   },
   "properties": {
+    "id": {
+      "type": "string",
+      "id": true,
+      "required": false,
+      "defaultFn": "uuid",
+      "postgresql": {
+        "dataType": "uuid"
+      }
+    },
     "nom": {
       "type": "string",
       "required": true
@@ -43,7 +52,11 @@
       "required": true
     },
     "helper_id": {
-      "type": "number"
+      "type": "string",
+      "required": false,
+      "postgresql": {
+        "dataType": "uuid"
+      }
     }
   },
   "validations": [],
