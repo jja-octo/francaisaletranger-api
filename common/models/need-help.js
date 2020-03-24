@@ -112,15 +112,15 @@ module.exports = function(Needhelp) {
       }, (error, helper) => {
         const neederLocation = new loopback.GeoPoint(needer.gps_coordinates);
         var helperLocation = new loopback.GeoPoint(helper.gps_coordinates);
-        const distanceInMeters = neederLocation.distanceTo(helperLocation, {
+        const distanceInMeters = Math.round(neederLocation.distanceTo(helperLocation, {
           type: 'meters',
-        });
+        }));
 
         loopback.Email.send({
             from: process.env.MAILJET_FROM,
             to: needer.email,
-            subject: `${needer.nom} nous avons trouvé un matching !`,
-            text: 'Nous avons trouvé un matching !',
+            subject: `${needer.prenom} ${needer.nom}, nous avons trouvé un matching !`,
+            text: `La plateforme vient de vous trouver de l\'aide. Vous pouvez contacter ${helper.nom} ${helper.prenom}, il est à ${distanceInMeters} mètres de vous. Vous pouvez le contacter à l'adresse suivante : ${helper.email}`,
             html: `<div><p>La plateforme vient de vous trouver de l'aide.</p><p>Vous pouvez contacter ${helper.nom} ${helper.prenom}, il est à ${distanceInMeters} mètres de vous.</p><p>Vous pouvez le contacter à <a href="mailto:${helper.email}">l'adresse suivante.</a></p></div>`,
           })
           .then(result => {
