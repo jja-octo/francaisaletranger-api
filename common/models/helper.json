@@ -15,6 +15,14 @@
         "dataType": "uuid"
       }
     },
+    "updated_at": {
+      "type": "date",
+      "required": false,
+      "defaultFn": "now",
+      "postgresql": {
+        "dataType": "timestamp"
+      }
+    },
     "nom": {
       "type": "string",
       "required": true
