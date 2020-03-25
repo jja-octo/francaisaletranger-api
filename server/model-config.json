@@ -17,7 +17,7 @@
     "dataSource": "heroku_postgres"
   },
   "AccessToken": {
-    "dataSource": "db",
+    "dataSource": "heroku_postgres",
     "public": false
   },
   "ACL": {
@@ -42,5 +42,9 @@
   "Helper": {
     "dataSource": "heroku_postgres",
     "public": true
+  },
+  "Email": {
+    "dataSource": "mailjet",
+    "public": false
   }
 }

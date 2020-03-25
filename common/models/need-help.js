@@ -23,6 +23,9 @@ module.exports = function(Needhelp) {
               },
             },
             {
+              need_help_id: null,
+            },
+            {
               or: [{
                 nombre_hebergement: {
                   gte: needer.nombre_hebergement,
@@ -31,6 +34,8 @@ module.exports = function(Needhelp) {
                 approvisionnement: needer.approvisionnement,
               }, {
                 autres: needer.autres,
+              }, {
+                garde_enfants: needer.garde_enfants,
               }],
             },
           ],
@@ -46,6 +51,7 @@ module.exports = function(Needhelp) {
             score += (savedNeeder.nombre_hebergement > 0 && savedNeeder.nombre_hebergement >= foundHelper.nombre_hebergement) ? 1 : 0;
             score += (savedNeeder.approvisionnement && savedNeeder.approvisionnement === foundHelper.approvisionnement) ? 1 : 0;
             score += (savedNeeder.autres && savedNeeder.autres === foundHelper.autres) ? 1 : 0;
+            score += (savedNeeder.garde_enfants && savedNeeder.garde_enfants === foundHelper.garde_enfants) ? 1 : 0;
 
             return score;
           }
@@ -56,6 +62,7 @@ module.exports = function(Needhelp) {
             prenom: foundHelper.prenom,
             nombre_hebergement: foundHelper.nombre_hebergement,
             approvisionnement: foundHelper.approvisionnement,
+            garde_enfants: foundHelper.garde_enfants,
             autres: foundHelper.autres,
             scoring: scoring(foundHelper),
             distanceInMeters: neederLocation.distanceTo(helperLocation, {
@@ -65,6 +72,65 @@ module.exports = function(Needhelp) {
         });
         cb(err, preparedHelperList);
       });
+    });
+  };
+
+  Needhelp.allWithMatching = function(maxDistance, cb) {
+    Needhelp.find({
+      where: {
+        helper_id: null,
+      },
+      limit: 50,
+    }, (err, needers) => {
+
+      let requests = needers.map((needers) => {
+        return new Promise((resolve) => {
+          Needhelp.matching(needers.id, maxDistance, (err, results) => {
+            resolve(Object.assign(needers, {
+              score: results.length,
+            }));
+          });
+        });
+      });
+
+      Promise.all(requests).then((results) => {
+        cb(null, results.filter(needHelp => needHelp.score > 0));
+      });
+    });
+  };
+
+  Needhelp.sendMatching = function (needHelp_id, helper_id, cb) {
+    Needhelp.findOne({
+      where: {
+        id: needHelp_id,
+      },
+    }, (err, needer) => {
+      Needhelp.app.models.Helper.findOne({
+        where: {
+          id: helper_id,
+        },
+      }, (error, helper) => {
+        const neederLocation = new loopback.GeoPoint(needer.gps_coordinates);
+        var helperLocation = new loopback.GeoPoint(helper.gps_coordinates);
+        const distanceInMeters = Math.round(neederLocation.distanceTo(helperLocation, {
+          type: 'meters',
+        }));
+
+        loopback.Email.send({
+            from: process.env.MAILJET_FROM,
+            to: needer.email,
+            subject: `${needer.prenom} ${needer.nom}, nous avons trouvé un matching !`,
+            text: `La plateforme vient de vous trouver de l\'aide. Vous pouvez contacter ${helper.prenom} ${helper.nom}, il est à ${distanceInMeters} mètres de vous. Vous pouvez le contacter à l'adresse suivante : ${helper.email}`,
+            html: `<div><p>La plateforme vient de vous trouver de l'aide.</p><p>Vous pouvez contacter ${helper.prenom} ${helper.nom}, il est à ${distanceInMeters} mètres de vous.</p><p>Vous pouvez le contacter à <a href="mailto:${helper.email}">l'adresse suivante.</a></p></div>`,
+          })
+          .then(result => {
+            needer.helper_id = helper.id;
+            Needhelp.upsert(needer, ()=>{});
+            cb(null, result);
+          })
+          .catch(error => cb(error));
+      });
+
     });
   };
 
@@ -83,6 +149,39 @@ module.exports = function(Needhelp) {
     },
     http: {
       verb: 'get',
+    },
+  });
+
+  Needhelp.remoteMethod('allWithMatching', {
+    accepts: [{
+      arg: 'maxDistance',
+      type: 'number',
+    }],
+    returns: {
+      args: 'response',
+      type: 'object',
+      root: true,
+    },
+    http: {
+      verb: 'get',
+    },
+  });
+
+  Needhelp.remoteMethod('sendMatching', {
+    accepts: [{
+      arg: 'needHelp_id',
+      type: 'string',
+    }, {
+      arg: 'helper_id',
+      type: 'string ',
+    }],
+    returns: {
+      args: 'response',
+      type: 'object',
+      root: true,
+    },
+    http: {
+      verb: 'post',
     },
   });
 };

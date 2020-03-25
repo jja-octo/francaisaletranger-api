@@ -9,4 +9,14 @@ module.exports = {
     'connector': 'postgresql',
     ssl: true,
   },
+  'mailjet': {
+    'connector': 'loopback-connector-mailjet',
+    'apiKey': process.env.MAILJET_API_KEY,
+    'apiSecret': process.env.MAILJET_API_SECRET,
+    'options': {
+      'url': 'api.mailjet.com',
+      'version': 'v3.1',
+      'perform_api_call': false,
+    },
+  },
 };
