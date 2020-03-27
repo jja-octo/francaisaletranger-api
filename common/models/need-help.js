@@ -2,6 +2,22 @@
 var loopback = require('loopback');
 
 module.exports = function(Needhelp) {
+
+  Needhelp.observe('after save', function(ctx, next) {
+    Needhelp.updatePostGISGpsCoordinates(ctx.instance.id, function(err) {
+      if (err) return next(err);
+      next();
+    });
+  });
+
+  Needhelp.updatePostGISGpsCoordinates = function(id, cb) {
+    const sqlStatement = 'update needhelp set gps_coordinates_geo=ST_POINT(gps_coordinates[0],gps_coordinates[1]) where id=$1';
+    const sqlParams = [id];
+    Needhelp.dataSource.connector.execute(sqlStatement, sqlParams, function(err) {
+      cb(err);
+    });
+  };
+
   Needhelp.matching = function(id, maxDistance, cb) {
     let savedNeeder;
 
