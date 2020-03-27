@@ -80,7 +80,7 @@ module.exports = function(Needhelp) {
       where: {
         helper_id: null,
       },
-      limit: 50,
+      limit: process.env.MATCHING_LIMIT || 10,
     }, (err, needers) => {
 
       let requests = needers.map((needers) => {
@@ -110,18 +110,14 @@ module.exports = function(Needhelp) {
           id: helper_id,
         },
       }, (error, helper) => {
-        const neederLocation = new loopback.GeoPoint(needer.gps_coordinates);
-        var helperLocation = new loopback.GeoPoint(helper.gps_coordinates);
-        const distanceInMeters = Math.round(neederLocation.distanceTo(helperLocation, {
-          type: 'meters',
-        }));
+        const maxDistance = 10000;
 
         loopback.Email.send({
             from: process.env.MAILJET_FROM,
             to: needer.email,
-            subject: `${needer.prenom} ${needer.nom}, nous avons trouvé un matching !`,
-            text: `La plateforme vient de vous trouver de l\'aide. Vous pouvez contacter ${helper.prenom} ${helper.nom}, il est à ${distanceInMeters} mètres de vous. Vous pouvez le contacter à l'adresse suivante : ${helper.email}`,
-            html: `<div><p>La plateforme vient de vous trouver de l'aide.</p><p>Vous pouvez contacter ${helper.prenom} ${helper.nom}, il est à ${distanceInMeters} mètres de vous.</p><p>Vous pouvez le contacter à cette adresse : <a href="mailto:${helper.email}">${helper.email}</a></p></div>`,
+            subject: 'Solidarité Francais à l\'étranger : quelqu\'un peut vous aider !',
+            text: `La plateforme Solidarité Francais à l'étranger vient de vous trouver de l\'aide. Vous pouvez contacter ${helper.prenom} ${helper.nom} à cette adresse email: ${helper.email}. Cette personne est à moins de ${maxDistance / 1000} km de vous. Bonne prise de contact :)`,
+            html: `<div><p>La plateforme <a href="https://solidarite-fde.beta.gouv.fr">Solidarité Francais à l'étranger</a> vient de vous trouver de l'aide.</p><p>Vous pouvez contacter ${helper.prenom} ${helper.nom} à cette adresse email : <a href="mailto:${helper.email}">${helper.email}</a>. Cette personne est à moins de ${maxDistance / 1000} km de vous.</p><p>Bonne prise de contact :)</p></div>`,
           })
           .then(result => {
             needer.helper_id = helper.id;
