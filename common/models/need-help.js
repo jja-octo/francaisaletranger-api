@@ -115,7 +115,7 @@ module.exports = function(Needhelp) {
         loopback.Email.send({
             from: process.env.MAILJET_FROM,
             to: needer.email,
-            subject: 'La plateforme Solidarité Francais à l\'étranger vient de vous trouver de l\'aide.',
+            subject: 'Solidarité Francais à l\'étranger : quelqu\'un peut vous aider !',
             text: `La plateforme Solidarité Francais à l'étranger vient de vous trouver de l\'aide. Vous pouvez contacter ${helper.prenom} ${helper.nom} à cette adresse email: ${helper.email}. Cette personne est à moins de ${maxDistance / 1000} km de vous. Bonne prise de contact :)`,
             html: `<div><p>La plateforme <a href="https://solidarite-fde.beta.gouv.fr">Solidarité Francais à l'étranger</a> vient de vous trouver de l'aide.</p><p>Vous pouvez contacter ${helper.prenom} ${helper.nom} à cette adresse email : <a href="mailto:${helper.email}">${helper.email}</a>. Cette personne est à moins de ${maxDistance / 1000} km de vous.</p><p>Bonne prise de contact :)</p></div>`,
           })
