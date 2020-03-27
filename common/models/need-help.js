@@ -80,7 +80,7 @@ module.exports = function(Needhelp) {
       where: {
         helper_id: null,
       },
-      limit: 50,
+      limit: process.env.MATCHING_LIMIT || 10,
     }, (err, needers) => {
 
       let requests = needers.map((needers) => {
