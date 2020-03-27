@@ -11,68 +11,70 @@ module.exports = function(Needhelp) {
       },
     }, (err, needer) => {
       savedNeeder = needer;
-
-      Needhelp.app.models.Helper.find({
-        where: {
-          and: [
-            {
-              gps_coordinates: {
-                near: needer.gps_coordinates,
-                maxDistance,
-                unit: 'meters',
-              },
-            },
-            {
-              need_help_id: null,
-            },
-            {
-              or: [{
-                nombre_hebergement: {
-                  gte: needer.nombre_hebergement,
+      const sqlStatement = 'select id, st_distance(gps_coordinates_geo,st_point($1,$2)) from helper where ST_DWithin(gps_coordinates_geo,st_point($1,$2), $3)'
+      const sqlParams = [needer.gps_coordinates.lng, needer.gps_coordinates.lat, maxDistance]
+      Needhelp.dataSource.connector.query(sqlStatement, sqlParams, (err, data) => {
+        const ids = data.map(record=>record.id)
+        Needhelp.app.models.Helper.find({
+          where: {
+            and: [
+              {
+                id: {
+                  inq: ids,
                 },
-              }, {
-                approvisionnement: needer.approvisionnement,
-              }, {
-                autres: needer.autres,
-              }, {
-                garde_enfants: needer.garde_enfants,
-              }],
-            },
-          ],
-        },
-      }, (err, foundHelperList) => {
-        const preparedHelperList = foundHelperList.map((foundHelper) => {
-          const neederLocation = new loopback.GeoPoint(needer.gps_coordinates);
-          var helperLocation = new loopback.GeoPoint(foundHelper.gps_coordinates);
+              },
+              {
+                need_help_id: null,
+              },
+              {
+                or: [{
+                  nombre_hebergement: {
+                    gte: needer.nombre_hebergement,
+                  },
+                }, {
+                  approvisionnement: needer.approvisionnement,
+                }, {
+                  autres: needer.autres,
+                }, {
+                  garde_enfants: needer.garde_enfants,
+                }],
+              },
+            ],
+          },
+        }, (err, foundHelperList) => {
+          const preparedHelperList = foundHelperList.map((foundHelper) => {
+            const neederLocation = new loopback.GeoPoint(needer.gps_coordinates);
+            var helperLocation = new loopback.GeoPoint(foundHelper.gps_coordinates);
 
-          function scoring(foundHelper) {
-            let score = 0;
+            function scoring(foundHelper) {
+              let score = 0;
 
-            score += (savedNeeder.nombre_hebergement > 0 && savedNeeder.nombre_hebergement >= foundHelper.nombre_hebergement) ? 1 : 0;
-            score += (savedNeeder.approvisionnement && savedNeeder.approvisionnement === foundHelper.approvisionnement) ? 1 : 0;
-            score += (savedNeeder.autres && savedNeeder.autres === foundHelper.autres) ? 1 : 0;
-            score += (savedNeeder.garde_enfants && savedNeeder.garde_enfants === foundHelper.garde_enfants) ? 1 : 0;
+              score += (savedNeeder.nombre_hebergement > 0 && savedNeeder.nombre_hebergement >= foundHelper.nombre_hebergement) ? 1 : 0;
+              score += (savedNeeder.approvisionnement && savedNeeder.approvisionnement === foundHelper.approvisionnement) ? 1 : 0;
+              score += (savedNeeder.autres && savedNeeder.autres === foundHelper.autres) ? 1 : 0;
+              score += (savedNeeder.garde_enfants && savedNeeder.garde_enfants === foundHelper.garde_enfants) ? 1 : 0;
 
-            return score;
-          }
+              return score;
+            }
 
-          return {
-            id: foundHelper.id,
-            nom: foundHelper.nom,
-            prenom: foundHelper.prenom,
-            nombre_hebergement: foundHelper.nombre_hebergement,
-            approvisionnement: foundHelper.approvisionnement,
-            garde_enfants: foundHelper.garde_enfants,
-            autres: foundHelper.autres,
-            scoring: scoring(foundHelper),
-            distanceInMeters: neederLocation.distanceTo(helperLocation, {
-              type: 'meters',
-            }),
-          };
-        });
-        cb(err, preparedHelperList);
+            return {
+              id: foundHelper.id,
+              nom: foundHelper.nom,
+              prenom: foundHelper.prenom,
+              nombre_hebergement: foundHelper.nombre_hebergement,
+              approvisionnement: foundHelper.approvisionnement,
+              garde_enfants: foundHelper.garde_enfants,
+              autres: foundHelper.autres,
+              scoring: scoring(foundHelper),
+              distanceInMeters: neederLocation.distanceTo(helperLocation, {
+                type: 'meters',
+              }),
+            };
+          });
+          cb(err, preparedHelperList);
+        }); // end find
       });
-    });
+    }); // End method
   };
 
   Needhelp.allWithMatching = function(maxDistance, cb) {
