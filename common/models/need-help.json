@@ -10,7 +10,7 @@
       "type": "string",
       "id": true,
       "required": false,
-      "defaultFn": "uuid",
+      "defaultFn": "uuidv4",
       "postgresql": {
         "dataType": "uuid"
       }
