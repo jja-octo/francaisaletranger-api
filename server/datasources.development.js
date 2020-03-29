@@ -6,7 +6,7 @@ module.exports = {
   },
   'heroku_postgres': {
     'url': process.env.DATABASE_URL,
-    'ssl': true,
+    'ssl': process.env.DATABASE_DISABLE_SSL !== 'true',
     'connector': 'postgresql',
   },
   'mailjet': {
