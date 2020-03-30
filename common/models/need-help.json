@@ -55,7 +55,7 @@
       "type": "boolean",
       "required": true
     },
-    "garde_enfants": {
+    "conseils": {
       "type": "boolean",
       "required": true
     },
