@@ -65,7 +65,7 @@ module.exports = function(Needhelp) {
             function scoring(foundHelper) {
               let score = 0;
 
-              score += (savedNeeder.nombre_hebergement > 0 && savedNeeder.nombre_hebergement >= foundHelper.nombre_hebergement) ? 1 : 0;
+              score += (savedNeeder.nombre_hebergement > 0 && foundHelper.nombre_hebergement >= savedNeeder.nombre_hebergement) ? 1 : 0;
               score += (savedNeeder.approvisionnement && savedNeeder.approvisionnement === foundHelper.approvisionnement) ? 1 : 0;
               score += (savedNeeder.autres && savedNeeder.autres === foundHelper.autres) ? 1 : 0;
               score += (savedNeeder.conseils && savedNeeder.conseils === foundHelper.conseils) ? 1 : 0;
