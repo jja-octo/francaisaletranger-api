@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 'use strict';
 var loopback = require('loopback');
 
@@ -26,10 +27,10 @@ module.exports = function(Needhelp) {
       },
     }, (err, needer) => {
       savedNeeder = needer;
-      const sqlStatement = 'select id, st_distance(gps_coordinates_geo,st_point($1,$2)) from helper where ST_DWithin(gps_coordinates_geo,st_point($1,$2), $3)';
+      const sqlStatement = 'select id, st_distance(gps_coordinates_geo,st_point($1,$2)) as distanceInMeters from helper where ST_DWithin(gps_coordinates_geo,st_point($1,$2), $3)';
       const sqlParams = [needer.gps_coordinates.lng, needer.gps_coordinates.lat, maxDistance];
-      Needhelp.dataSource.connector.query(sqlStatement, sqlParams, (err, data) => {
-        const ids = data.map(record => record.id);
+      Needhelp.dataSource.connector.query(sqlStatement, sqlParams, (err, neerHelpersPostGIS) => {
+        const ids = neerHelpersPostGIS.map(record => record.id);
         Needhelp.app.models.Helper.find({
           where: {
             and: [
@@ -58,18 +59,28 @@ module.exports = function(Needhelp) {
           },
         }, (err, foundHelperList) => {
           const preparedHelperList = foundHelperList.map((foundHelper) => {
-            const neederLocation = new loopback.GeoPoint(needer.gps_coordinates);
-            var helperLocation = new loopback.GeoPoint(foundHelper.gps_coordinates);
-
-            function scoring(foundHelper) {
+            function criteresMatching(foundHelper) {
               let score = 0;
+              let total = 0;
 
-              score += (savedNeeder.nombre_hebergement > 0 && foundHelper.nombre_hebergement >= savedNeeder.nombre_hebergement) ? 1 : 0;
-              score += (savedNeeder.approvisionnement && savedNeeder.approvisionnement === foundHelper.approvisionnement) ? 1 : 0;
-              score += (savedNeeder.autres && savedNeeder.autres === foundHelper.autres) ? 1 : 0;
-              score += (savedNeeder.conseils && savedNeeder.conseils === foundHelper.conseils) ? 1 : 0;
+              if (savedNeeder.nombre_hebergement > 0) {
+                score += (foundHelper.nombre_hebergement >= savedNeeder.nombre_hebergement) ? 1 : 0;
+                total += 1;
+              }
+              if (savedNeeder.approvisionnement) {
+                score += (savedNeeder.approvisionnement === foundHelper.approvisionnement) ? 1 : 0;
+                total += 1;
+              }
+              if (savedNeeder.autres) {
+                score += (savedNeeder.autres === foundHelper.autres) ? 1 : 0;
+                total += 1;
+              }
+              if (savedNeeder.conseils) {
+                score += (savedNeeder.conseils === foundHelper.conseils) ? 1 : 0;
+                total += 1;
+              }
 
-              return score;
+              return {score, total};
             }
 
             return {
@@ -80,13 +91,35 @@ module.exports = function(Needhelp) {
               approvisionnement: foundHelper.approvisionnement,
               conseils: foundHelper.conseils,
               autres: foundHelper.autres,
-              scoring: scoring(foundHelper),
-              distanceInMeters: neederLocation.distanceTo(helperLocation, {
-                type: 'meters',
-              }),
+              criteresMatching: criteresMatching(foundHelper),
+              distanceInMeters: neerHelpersPostGIS.filter(helper => helper.id === foundHelper.id)[0].distanceinmeters,
             };
           });
-          cb(err, preparedHelperList);
+
+          preparedHelperList
+            .sort((a, b) => {
+              // we sort by distance
+              return a.distanceInMeters - b.distanceInMeters;
+            })
+            .map((helper, index) => {
+              let addToScore;
+
+              // if the current distance is the same as the previous one, we add the same score
+              if (index !== 0 && preparedHelperList[index - 1].distanceInMeters === helper.distanceInMeters) {
+                addToScore = 1 - ((index - 1) / preparedHelperList.length);
+              } else {
+                // otherwise we calculate a pro rata in relation to the total number of aid requests according to the position in the list
+                addToScore = 1 - (index / preparedHelperList.length);
+              }
+
+              helper.scoring = helper.criteresMatching.score + Math.round(addToScore * 100) / 100;
+
+              return helper;
+            });
+
+          cb(err, preparedHelperList.sort((a, b) => {
+            return b.scoring - a.scoring;
+          }));
         }); // end find
       });
     }); // End method
