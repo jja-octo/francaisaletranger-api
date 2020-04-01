@@ -27,10 +27,10 @@ module.exports = function(Needhelp) {
       },
     }, (err, needer) => {
       savedNeeder = needer;
-      const sqlStatement = 'select id, st_distance(gps_coordinates_geo,st_point($1,$2)) from helper where ST_DWithin(gps_coordinates_geo,st_point($1,$2), $3)';
+      const sqlStatement = 'select id, st_distance(gps_coordinates_geo,st_point($1,$2)) as distanceInMeters from helper where ST_DWithin(gps_coordinates_geo,st_point($1,$2), $3)';
       const sqlParams = [needer.gps_coordinates.lng, needer.gps_coordinates.lat, maxDistance];
-      Needhelp.dataSource.connector.query(sqlStatement, sqlParams, (err, data) => {
-        const ids = data.map(record => record.id);
+      Needhelp.dataSource.connector.query(sqlStatement, sqlParams, (err, neerHelpersPostGIS) => {
+        const ids = neerHelpersPostGIS.map(record => record.id);
         Needhelp.app.models.Helper.find({
           where: {
             and: [
@@ -59,9 +59,6 @@ module.exports = function(Needhelp) {
           },
         }, (err, foundHelperList) => {
           const preparedHelperList = foundHelperList.map((foundHelper) => {
-            const neederLocation = new loopback.GeoPoint(needer.gps_coordinates);
-            var helperLocation = new loopback.GeoPoint(foundHelper.gps_coordinates);
-
             function criteresMatching(foundHelper) {
               let score = 0;
               let total = 0;
@@ -95,29 +92,27 @@ module.exports = function(Needhelp) {
               conseils: foundHelper.conseils,
               autres: foundHelper.autres,
               criteresMatching: criteresMatching(foundHelper),
-              distanceInMeters: neederLocation.distanceTo(helperLocation, {
-                type: 'meters',
-              }),
+              distanceInMeters: neerHelpersPostGIS.filter(helper => helper.id === foundHelper.id)[0].distanceinmeters,
             };
           });
 
           preparedHelperList
             .sort((a, b) => {
-              // on trie par distance
+              // we sort by distance
               return a.distanceInMeters - b.distanceInMeters;
             })
             .map((helper, index) => {
-              let addToScrore = 1;
+              let addToScore;
 
-              // si la distance actuelle est la même que la précédente, on ajoute le même score
+              // if the current distance is the same as the previous one, we add the same score
               if (index !== 0 && preparedHelperList[index - 1].distanceInMeters === helper.distanceInMeters) {
-                addToScrore = 1 - ((index - 1) / preparedHelperList.length);
+                addToScore = 1 - ((index - 1) / preparedHelperList.length);
               } else {
-                // sinon on calcule un prorata par rapport au nombre total de demande d'aide en fonction de la position dans la liste
-                addToScrore = 1 - (index / preparedHelperList.length);
+                // otherwise we calculate a pro rata in relation to the total number of aid requests according to the position in the list
+                addToScore = 1 - (index / preparedHelperList.length);
               }
 
-              helper.scoring = helper.criteresMatching.score + Math.round(addToScrore * 100) / 100;
+              helper.scoring = helper.criteresMatching.score + Math.round(addToScore * 100) / 100;
 
               return helper;
             });
