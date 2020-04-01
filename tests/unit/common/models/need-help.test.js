@@ -2,35 +2,13 @@
 const modelFn = require('../../../../common/models/need-help')
 const expect = require('expect.js');
 
-function needHelpModelStub(needHelp, helpersQueryData) {
-  const needHelpTable = {
-    neederId: needHelp
+const Needhelp = {
+  observe: () => {
+  },
+  remoteMethod: () => {
   }
-  const sqlQueryData = helpersQueryData.map((h) => {return {id: h.id}})
-  const NeedhelpStub = {
-    observe: () => {
-    },
-    remoteMethod: () => {
-    },
-    findOne: (criteria, callback) => {
-      callback(null,needHelpTable[criteria.where.id]);
-    },
-    dataSource: {
-      connector: {
-        query: (sqlStatement, sqlParams, callback) => {callback(null,sqlQueryData)}
-      }
-    },
-    app: {
-      models: {
-        Helper: {
-          find: (criteria, callback) => {callback(null,helpersQueryData)}
-        }
-      }
-    }
-  }
-  modelFn(NeedhelpStub);
-  return NeedhelpStub  
 }
+modelFn(Needhelp)
 
 function comparableResults(results) {
   return results.map((r) => {
@@ -42,8 +20,8 @@ function comparableResults(results) {
   })
 }
 describe('Needhelp (unit)', () => {
-  describe('matching()', () => {
-    it('navigates into legacy code', (done) => {
+  describe('matchingScoring()', () => {
+    it('___', () => {
       // Given
 
       const needer = {
@@ -97,10 +75,9 @@ describe('Needhelp (unit)', () => {
           lat: 50
         }
       }]
-      const maxDistance = 42
 
       // When
-      needHelpModelStub(needer,foundHelpers).matching(needer.id, maxDistance, (err, results) => {
+      const results = Needhelp.matchingScoring(needer, foundHelpers)
 
         // Then
         expect(comparableResults(results)).to.eql(
@@ -111,19 +88,18 @@ describe('Needhelp (unit)', () => {
               criteresMatching: { score: 3, total: 3 }
             },
             {
-              id: 'helper_3',
-              distanceInMeters: 7147,
-              criteresMatching: { score: 3, total: 3 }
-            },
-            {
               id: 'helper_2',
               distanceInMeters: 0,
               criteresMatching: { score: 1, total: 3 }
+            },
+            {
+              id: 'helper_3',
+              distanceInMeters: 7147,
+              criteresMatching: { score: 3, total: 3 }
             }
           ]
         )
-        done()
-      })
+        
     });
   });
 });
