@@ -1115,12 +1115,12 @@ module.exports = function(User) {
         description: 'Logout a user with access token.',
         accepts: [
           {arg: 'access_token', type: 'string', http: function(ctx) {
-              var req = ctx && ctx.req;
-              var accessToken = req && req.accessToken;
-              var tokenID = accessToken ? accessToken.id : undefined;
+            var req = ctx && ctx.req;
+            var accessToken = req && req.accessToken;
+            var tokenID = accessToken ? accessToken.id : undefined;
 
-              return tokenID;
-            }, description: 'Do not supply this argument, it is automatically extracted ' +
+            return tokenID;
+          }, description: 'Do not supply this argument, it is automatically extracted ' +
               'from request headers.',
           },
         ],
