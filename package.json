@@ -18,7 +18,7 @@
     "helmet": "^3.10.0",
     "loopback": "^3.22.0",
     "loopback-boot": "^2.6.5",
-    "loopback-component-explorer": "^6.2.0",
+    "loopback-component-explorer": "^6.5.1",
     "loopback-connector-mailjet": "^1.0.6",
     "loopback-connector-mailjet_v3.1": "^0.0.3",
     "loopback-connector-postgresql": "^3.9.1",
