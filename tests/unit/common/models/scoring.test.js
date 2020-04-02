@@ -1,14 +1,6 @@
 'use strict';
-const modelFn = require('../../../../common/models/need-help')
+const scoring = require('../../../../common/models/scoring')
 const expect = require('expect.js');
-
-const Needhelp = {
-  observe: () => {
-  },
-  remoteMethod: () => {
-  }
-}
-modelFn(Needhelp)
 
 function comparableResults(results) {
   return results.map((r) => {
@@ -19,7 +11,7 @@ function comparableResults(results) {
     }
   })
 }
-describe('Needhelp (unit)', () => {
+describe('scoring', () => {
   describe('matchingScoring()', () => {
     it('___', () => {
       // Given
@@ -77,7 +69,7 @@ describe('Needhelp (unit)', () => {
       }]
 
       // When
-      const results = Needhelp.matchingScoring(needer, foundHelpers)
+      const results = scoring.matchingScoring(needer, foundHelpers)
 
         // Then
         expect(comparableResults(results)).to.eql(
