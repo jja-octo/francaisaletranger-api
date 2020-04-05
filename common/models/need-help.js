@@ -19,7 +19,7 @@ module.exports = function(Needhelp) {
     });
   };
 
-    Needhelp.matching = function(id, maxDistance, cb) {
+  Needhelp.matching = function(id, maxDistance, cb) {
     Needhelp.findOne({
       where: {
         id,
@@ -57,9 +57,7 @@ module.exports = function(Needhelp) {
           },
         }, (err, foundHelperList) => {
           const scoredHelperList = scoring.matchingScoring(needer, foundHelperList, neerHelpersPostGIS);
-          cb(err, scoredHelperList.sort((a, b) => { // TODO remove me because I will be sorted by the front-end ?
-            return b.scoring - a.scoring;
-          }));
+          cb(err, scoredHelperList);
         }); // end find
       });
     }); // End method

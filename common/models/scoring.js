@@ -61,6 +61,9 @@ function matchingScoring(savedNeeder, foundHelperList, idsAndDistances) {
       helper.scoring = helper.criteresMatching.score + Math.round(addToScore * 100) / 100;
 
       return helper;
+    })
+    .sort((a, b) => {
+      return b.scoring - a.scoring;
     });
 }
 
