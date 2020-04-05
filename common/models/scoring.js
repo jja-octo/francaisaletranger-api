@@ -1,69 +1,67 @@
 'use strict';
-var loopback = require('loopback');
-function matchingScoring(savedNeeder, foundHelperList) {
-    const preparedHelperList = foundHelperList.map((foundHelper) => {
-        const neederLocation = new loopback.GeoPoint(savedNeeder.gps_coordinates);
-        var helperLocation = new loopback.GeoPoint(foundHelper.gps_coordinates);
 
-        function criteresMatching(foundHelper) {
-            let score = 0;
-            let total = 0;
+function matchingScoring(savedNeeder, foundHelperList, idsAndDistances) {
+  const distance = {}
+  idsAndDistances.forEach(tuple => distance[tuple.id] = tuple.distanceinmeters)
+  const preparedHelperList = foundHelperList.map((foundHelper) => {
 
-            if (savedNeeder.nombre_hebergement > 0) {
-                score += (foundHelper.nombre_hebergement >= savedNeeder.nombre_hebergement) ? 1 : 0;
-                total += 1;
-            }
-            if (savedNeeder.approvisionnement) {
-                score += (savedNeeder.approvisionnement === foundHelper.approvisionnement) ? 1 : 0;
-                total += 1;
-            }
-            if (savedNeeder.autres) {
-                score += (savedNeeder.autres === foundHelper.autres) ? 1 : 0;
-                total += 1;
-            }
-            if (savedNeeder.conseils) {
-                score += (savedNeeder.conseils === foundHelper.conseils) ? 1 : 0;
-                total += 1;
-            }
+    function criteresMatching(foundHelper) {
+      let score = 0;
+      let total = 0;
 
-            return { score, total };
-        }
+      if (savedNeeder.nombre_hebergement > 0) {
+        score += (foundHelper.nombre_hebergement >= savedNeeder.nombre_hebergement) ? 1 : 0;
+        total += 1;
+      }
+      if (savedNeeder.approvisionnement) {
+        score += (savedNeeder.approvisionnement === foundHelper.approvisionnement) ? 1 : 0;
+        total += 1;
+      }
+      if (savedNeeder.autres) {
+        score += (savedNeeder.autres === foundHelper.autres) ? 1 : 0;
+        total += 1;
+      }
+      if (savedNeeder.conseils) {
+        score += (savedNeeder.conseils === foundHelper.conseils) ? 1 : 0;
+        total += 1;
+      }
 
-        return {
-            id: foundHelper.id,
-            nom: foundHelper.nom,
-            prenom: foundHelper.prenom,
-            nombre_hebergement: foundHelper.nombre_hebergement,
-            approvisionnement: foundHelper.approvisionnement,
-            conseils: foundHelper.conseils,
-            autres: foundHelper.autres,
-            criteresMatching: criteresMatching(foundHelper),
-            distanceInMeters: neederLocation.distanceTo(helperLocation, {
-                type: 'meters',
-            }),
-        };
+      return {score, total};
+    }
+
+    return {
+      id: foundHelper.id,
+      nom: foundHelper.nom,
+      prenom: foundHelper.prenom,
+      nombre_hebergement: foundHelper.nombre_hebergement,
+      approvisionnement: foundHelper.approvisionnement,
+      conseils: foundHelper.conseils,
+      autres: foundHelper.autres,
+      criteresMatching: criteresMatching(foundHelper),
+      distanceInMeters: distance[foundHelper.id],
+    };
+  });
+
+  return preparedHelperList
+    .sort((a, b) => {
+      // we sort by distance
+      return a.distanceInMeters - b.distanceInMeters;
+    })
+    .map((helper, index) => {
+      let addToScore;
+
+      // if the current distance is the same as the previous one, we add the same score
+      if (index !== 0 && preparedHelperList[index - 1].distanceInMeters === helper.distanceInMeters) {
+        addToScore = 1 - ((index - 1) / preparedHelperList.length);
+      } else {
+        // otherwise we calculate a pro rata in relation to the total number of aid requests according to the position in the list
+        addToScore = 1 - (index / preparedHelperList.length);
+      }
+
+      helper.scoring = helper.criteresMatching.score + Math.round(addToScore * 100) / 100;
+
+      return helper;
     });
-
-    return preparedHelperList
-        .sort((a, b) => {
-            // on trie par distance
-            return a.distanceInMeters - b.distanceInMeters;
-        })
-        .map((helper, index) => {
-            let addToScrore = 1;
-
-            // si la distance actuelle est la même que la précédente, on ajoute le même score
-            if (index !== 0 && preparedHelperList[index - 1].distanceInMeters === helper.distanceInMeters) {
-                addToScrore = 1 - ((index - 1) / preparedHelperList.length);
-            } else {
-                // sinon on calcule un prorata par rapport au nombre total de demande d'aide en fonction de la position dans la liste
-                addToScrore = 1 - (index / preparedHelperList.length);
-            }
-
-            helper.scoring = helper.criteresMatching.score + Math.round(addToScrore * 100) / 100;
-
-            return helper;
-        });
 }
 
 module.exports.matchingScoring = matchingScoring
