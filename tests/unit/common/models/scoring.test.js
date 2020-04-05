@@ -8,14 +8,14 @@ describe('scoring', () => {
       return results.map(({id, criteresMatching}) => ({id, criteresMatching}))
     }
 
-    it('___', () => { // TODO
+    it('sorts by distance', () => {
       // Given
 
       const needer = {
         id: 'neederId',
-        nombre_hebergement: 2,
-        approvisionnement: true,
-        conseils: true,
+        nombre_hebergement: 1,
+        approvisionnement: false,
+        conseils: false,
         autres: false,
       }
 
@@ -25,13 +25,13 @@ describe('scoring', () => {
           nombre_hebergement: 2,
           approvisionnement: true,
           conseils: true,
-          autres: false,
+          autres: true,
         },
         {
           id: 'helper_2',
           nombre_hebergement: 2,
-          approvisionnement: false,
-          conseils: false,
+          approvisionnement: true,
+          conseils: true,
           autres: true,
         },
         {
@@ -39,13 +39,13 @@ describe('scoring', () => {
           nombre_hebergement: 2,
           approvisionnement: true,
           conseils: true,
-          autres: false,
+          autres: true,
         }
       ]
       const idsAndDistances = [
         {id: 'helper_1', distanceinmeters: 0},
-        {id: 'helper_2', distanceinmeters: 0},
-        {id: 'helper_3', distanceinmeters: 7147},
+        {id: 'helper_2', distanceinmeters: 7000},
+        {id: 'helper_3', distanceinmeters: 2000},
       ]
 
       // When
@@ -56,15 +56,15 @@ describe('scoring', () => {
         [
           {
             id: 'helper_1',
-            criteresMatching: {score: 3, total: 3}
-          },
-          {
-            id: 'helper_2',
-            criteresMatching: {score: 1, total: 3}
+            criteresMatching: {score: 1, total: 1}
           },
           {
             id: 'helper_3',
-            criteresMatching: {score: 3, total: 3}
+            criteresMatching: {score: 1, total: 1}
+          },
+          {
+            id: 'helper_2',
+            criteresMatching: {score: 1, total: 1}
           }
         ]
       )
