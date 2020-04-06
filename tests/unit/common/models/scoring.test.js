@@ -256,5 +256,55 @@ describe('scoring', () => {
       )
 
     });
+    it('scores the same when same criteria matching & same distances', () => {
+      // Given
+
+      const needer = {
+        id: 'neederId',
+        nombre_hebergement: 6,
+        approvisionnement: true,
+        conseils: true,
+        autres: true,
+      }
+
+      const foundHelpers = [
+        {
+          id: 'helper_1',
+          nombre_hebergement: 6,
+          approvisionnement: true,
+          conseils: true,
+          autres: true,
+        },
+        {
+          id: 'helper_2',
+          nombre_hebergement: 6,
+          approvisionnement: true,
+          conseils: true,
+          autres: true,
+        },
+      ]
+      const idsAndDistances = [
+        {id: 'helper_1', distanceinmeters: 4000},
+        {id: 'helper_2', distanceinmeters: 4000},
+      ]
+
+      // When
+      const results = scoring.matchingScoring(needer, foundHelpers, idsAndDistances)
+
+      // Then
+      expect(comparableResults(results)).to.eql(
+        [
+          {
+            id: 'helper_1',
+            scoring: 5
+          },
+          {
+            id: 'helper_2',
+            scoring: 5
+          },
+        ]
+      )
+
+    });
   });
 });
