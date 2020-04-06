@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 'use strict';
-var loopback = require('loopback');
+const loopback = require('loopback');
+const scoring = require('./scoring');
 
 module.exports = function(Needhelp) {
   Needhelp.observe('after save', function(ctx, next) {
@@ -19,18 +20,15 @@ module.exports = function(Needhelp) {
   };
 
   Needhelp.matching = function(id, maxDistance, cb) {
-    let savedNeeder;
-
     Needhelp.findOne({
       where: {
         id,
       },
     }, (err, needer) => {
-      savedNeeder = needer;
       const sqlStatement = 'select id, st_distance(gps_coordinates_geo,st_point($1,$2)) as distanceInMeters from helper where ST_DWithin(gps_coordinates_geo,st_point($1,$2), $3)';
       const sqlParams = [needer.gps_coordinates.lng, needer.gps_coordinates.lat, maxDistance];
-      Needhelp.dataSource.connector.query(sqlStatement, sqlParams, (err, neerHelpersPostGIS) => {
-        const ids = neerHelpersPostGIS.map(record => record.id);
+      Needhelp.dataSource.connector.query(sqlStatement, sqlParams, (err, needHelpersPostGIS) => {
+        const ids = needHelpersPostGIS.map(record => record.id);
         Needhelp.app.models.Helper.find({
           where: {
             and: [
@@ -58,68 +56,8 @@ module.exports = function(Needhelp) {
             ],
           },
         }, (err, foundHelperList) => {
-          const preparedHelperList = foundHelperList.map((foundHelper) => {
-            function criteresMatching(foundHelper) {
-              let score = 0;
-              let total = 0;
-
-              if (savedNeeder.nombre_hebergement > 0) {
-                score += (foundHelper.nombre_hebergement >= savedNeeder.nombre_hebergement) ? 1 : 0;
-                total += 1;
-              }
-              if (savedNeeder.approvisionnement) {
-                score += (savedNeeder.approvisionnement === foundHelper.approvisionnement) ? 1 : 0;
-                total += 1;
-              }
-              if (savedNeeder.autres) {
-                score += (savedNeeder.autres === foundHelper.autres) ? 1 : 0;
-                total += 1;
-              }
-              if (savedNeeder.conseils) {
-                score += (savedNeeder.conseils === foundHelper.conseils) ? 1 : 0;
-                total += 1;
-              }
-
-              return {score, total};
-            }
-
-            return {
-              id: foundHelper.id,
-              nom: foundHelper.nom,
-              prenom: foundHelper.prenom,
-              nombre_hebergement: foundHelper.nombre_hebergement,
-              approvisionnement: foundHelper.approvisionnement,
-              conseils: foundHelper.conseils,
-              autres: foundHelper.autres,
-              criteresMatching: criteresMatching(foundHelper),
-              distanceInMeters: neerHelpersPostGIS.filter(helper => helper.id === foundHelper.id)[0].distanceinmeters,
-            };
-          });
-
-          preparedHelperList
-            .sort((a, b) => {
-              // we sort by distance
-              return a.distanceInMeters - b.distanceInMeters;
-            })
-            .map((helper, index) => {
-              let addToScore;
-
-              // if the current distance is the same as the previous one, we add the same score
-              if (index !== 0 && preparedHelperList[index - 1].distanceInMeters === helper.distanceInMeters) {
-                addToScore = 1 - ((index - 1) / preparedHelperList.length);
-              } else {
-                // otherwise we calculate a pro rata in relation to the total number of aid requests according to the position in the list
-                addToScore = 1 - (index / preparedHelperList.length);
-              }
-
-              helper.scoring = helper.criteresMatching.score + Math.round(addToScore * 100) / 100;
-
-              return helper;
-            });
-
-          cb(err, preparedHelperList.sort((a, b) => {
-            return b.scoring - a.scoring;
-          }));
+          const scoredHelperList = scoring.matchingScoring(needer, foundHelperList, needHelpersPostGIS);
+          cb(err, scoredHelperList);
         }); // end find
       });
     }); // End method
@@ -166,7 +104,7 @@ module.exports = function(Needhelp) {
           to: needer.email,
           subject: 'Solidarité Francais à l\'étranger : quelqu\'un peut vous aider !',
           text: `La plateforme Solidarité Francais à l'étranger vient de vous trouver de l\'aide. Vous pouvez contacter ${helper.prenom} ${helper.nom} à cette adresse email: ${helper.email}. Cette personne est à moins de ${maxDistance / 1000} km de vous. Bonne prise de contact :)`,
-          html: `<div><p>La plateforme <a href="https://solidarite-fde.fr">Solidarité Francais à l'étranger</a> vient de vous trouver de l'aide.</p><p>Vous pouvez contacter ${helper.prenom} ${helper.nom} à cette adresse email : <a href="mailto:${helper.email}">${helper.email}</a>. Cette personne est à moins de ${maxDistance / 1000} km de vous.</p><p>Bonne prise de contact :)</p></div>`,
+          html: `<div><p>La plateforme <a href="https://solidarite-fde.beta.gouv.fr">Solidarité Francais à l'étranger</a> vient de vous trouver de l'aide.</p><p>Vous pouvez contacter ${helper.prenom} ${helper.nom} à cette adresse email : <a href="mailto:${helper.email}">${helper.email}</a>. Cette personne est à moins de ${maxDistance / 1000} km de vous.</p><p>Bonne prise de contact :)</p></div>`,
         })
           .then(result => {
             needer.helper_id = helper.id;

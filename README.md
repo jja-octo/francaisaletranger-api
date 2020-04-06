@@ -23,7 +23,14 @@ You'll need to add `DATABASE_DISABLE_SSL=true` if your local database does not s
 # install dependencies
 $ yarn install
 
+# run tests
+yarn test
+
+# run tests in watch mode
+yarn test --watch
+
 # Launch on localhost:3001
 $ yarn start
+
 ```
 
