@@ -27,8 +27,8 @@ module.exports = function(Needhelp) {
     }, (err, needer) => {
       const sqlStatement = 'select id, st_distance(gps_coordinates_geo,st_point($1,$2)) as distanceInMeters from helper where ST_DWithin(gps_coordinates_geo,st_point($1,$2), $3)';
       const sqlParams = [needer.gps_coordinates.lng, needer.gps_coordinates.lat, maxDistance];
-      Needhelp.dataSource.connector.query(sqlStatement, sqlParams, (err, neerHelpersPostGIS) => {
-        const ids = neerHelpersPostGIS.map(record => record.id);
+      Needhelp.dataSource.connector.query(sqlStatement, sqlParams, (err, needHelpersPostGIS) => {
+        const ids = needHelpersPostGIS.map(record => record.id);
         Needhelp.app.models.Helper.find({
           where: {
             and: [
@@ -56,7 +56,7 @@ module.exports = function(Needhelp) {
             ],
           },
         }, (err, foundHelperList) => {
-          const scoredHelperList = scoring.matchingScoring(needer, foundHelperList, neerHelpersPostGIS);
+          const scoredHelperList = scoring.matchingScoring(needer, foundHelperList, needHelpersPostGIS);
           cb(err, scoredHelperList);
         }); // end find
       });
